@@ -6,3 +6,5 @@ aiosqlite
 pydantic
 PyJWT[crypto]
 python-multipart
+pytest
+httpx
