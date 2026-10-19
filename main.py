@@ -3,7 +3,7 @@ import os
 from contextlib import asynccontextmanager
 from secrets import compare_digest
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Path
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,7 +33,19 @@ app = FastAPI(
 )
 
 
-@app.post("/token", tags=["Autenticação"])
+@app.post(
+    "/token",
+    tags=["Autenticação"],
+    summary="Autenticar usuário",
+    description=(
+        "Valida usuário e senha configurados nas variáveis de ambiente "
+        "e retorna um token JWT para acessar rotas protegidas."
+    ),
+    responses={
+        401: {"description": "Usuário ou senha incorretos"},
+        500: {"description": "Credenciais não configuradas"},
+    },
+)
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
 ):
@@ -63,7 +75,12 @@ async def login(
         "token_type": "bearer",
     }
 
-@app.get("/")
+@app.get(
+    "/",
+    tags=["Geral"],
+    summary="Verificar funcionamento da API",
+    description="Retorna uma mensagem indicando que a API está funcionando.",
+)
 async def inicio():
     return {"mensagem": "API Bancária funcionando!"}
 
@@ -143,8 +160,11 @@ async def listar_contas(db: AsyncSession = Depends(get_db)):
     },
 )
 async def criar_transacao(
-    account_id: int,
     transacao: Transacao,
+    account_id: int = Path(
+        description="Identificador numérico da conta bancária",
+        gt=0,
+    ),
     db: AsyncSession = Depends(get_db),
     usuario_atual: dict = Depends(verificar_token),
 ):
